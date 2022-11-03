@@ -29,9 +29,11 @@ import {
   SpinalNodeRef,
 } from 'spinal-env-viewer-graph-service';
 import OrganConfigModel from '../../../model/OrganConfigModel';
-import { getApiToken } from '../../../services/mission/AuthMission';
+import { getApiToken } from '../../../services/veolys/Auth';
 import { spinalServiceTicket } from 'spinal-service-ticket';
-import { diCree, IDICree } from '../../../services/mission/DICree';
+import { diCree, IDICree, getReasonId } from '../../../services/veolys/DICree';
+
+
 import { setOrAddAttr } from '../../../utils/setOrAddAttr';
 import { getTicketElems as getLocalFromTicket, getTicketLocals } from '../../../utils/getTicketLocal';
 import moment = require('moment');
@@ -110,7 +112,8 @@ export default class SyncRunTicketHub {
     const tickets: SpinalNodeRef[] =
       await spinalServiceTicket.getTicketsFromStep(stepId);
     for (const ticket of tickets) {
-      if (typeof ticket.gmaoId === 'undefined') {
+      // if the ticket doesn't have a veolysId it means it has not been sent to veolys yet
+      if (typeof ticket.veolysId === 'undefined') {
         // !!
         //await this.createTicketToMission(contextId, processId, stepId, ticket);
       }
@@ -147,7 +150,7 @@ export default class SyncRunTicketHub {
         files: pjs.map((itm) => itm.chNomPJ),
       });
       await diModify(gmaoId, {
-        chNumSession: await getApiToken(this.config),
+        chNumSession: await getApiToken(this.config,this.axiosInstance),
         PiecesJointes: pjs,
       });
     }
@@ -254,20 +257,16 @@ export default class SyncRunTicketHub {
       // This part is a bit tricky, we need to get the veolys id of the localization
       const local = getBuildingVeolysId(ticketItems.local?.info.id.get(), this.mapBuilding)
       const date = moment(ticketRef.creationDate?.get());
-      
+      const token = await getApiToken(this.config,this.axiosInstance);
+      const reasonId = await getReasonId(this.axiosInstance,token,local,process.info.name.get(),ticketRef.name.get());
       const req: IDICree = {
-        chNumSession: await getApiToken(this.config),
-        chDomaine: process.info.name.get(),
-        chLocal: local,
-        chLoginAppelant: this.config.mission.appelant.get(),
-        chObjet: ticketRef.name?.get() ?? '',
-        chDateDemande: date?.format('YYYYMMDD') ?? '',
-        chHeureDemande: date?.format('HHmm') ?? '',
-        chTelAppelant: ticketRef.user?.gsm?.get() ?? '',
-        enPriorite: ticketRef.priority?.get(),
-        chDetail: note,
+        author: 92940,
+        localization: local,
+        reason: reasonId,
+        priority: 1,
+        description: note
       };
-      await this.addImagesFromTickets(ticketNode, req);
+      /*await this.addImagesFromTickets(ticketNode, req);
       const files = await this.getTicketFiles(ticketNode);
       if (files.length > 0) {
         const pjs = await Promise.all(
@@ -291,10 +290,10 @@ export default class SyncRunTicketHub {
         } else {
           Object.assign(req, { PiecesJointes: pjs });
         }
-      }
-      const di = await diCree(req);
+      }*/
+      const di = await diCree(req, this.axiosInstance, token,this.clientBuildingId);
       // set step
-      setOrAddAttr(ticketNode.info, 'gmaoId', di.enNumDI);
+      setOrAddAttr(ticketNode.info, 'gmaoId', di.id);
     } catch (e) {
       console.log(e);
     }
@@ -329,8 +328,8 @@ export default class SyncRunTicketHub {
 
 
   /**
-   *Initialize class, contexts and map with the mapping recieved.
-   *
+   *  Initialize class, contexts and map with the mapping recieved.
+   *  Does NOT send any ticket whatsoever.
    * @param {MapBuilding} map
    * @return {*}  {Promise<void>}
    * @memberof SyncRunTicketHub
@@ -340,7 +339,6 @@ export default class SyncRunTicketHub {
     this.axiosInstance = axiosInstance;
     this.clientBuildingId = clientBuildingId;
     const context = await this.getContextTicket();
-    console.log("context", context);
     await context.findInContext(context, (node) => {
       // @ts-ignore
       SpinalGraphService._addNode(node);
@@ -361,7 +359,8 @@ export default class SyncRunTicketHub {
       if (!this.running) break;
       const before = Date.now();
       try {
-        await this.updateSpinalContext();
+        //await this.updateSpinalContext();
+        console.log("J'update le context");
       } catch (e) {
         console.error(e);
       }

@@ -25,7 +25,11 @@
 ### Studio
 
 - In the studio you need to create a Ticket context containing the following steps (in this order) : 
+    - Déclaration
+    - Assignation
+    - Réassignation
     - Acceptation
+    - Refusé
     - En réparation
     - Réparé
     - Terminé

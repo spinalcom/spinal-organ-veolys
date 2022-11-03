@@ -105,8 +105,9 @@ export class SyncRunPull {
   
   async updateProcessTicket(contextId: string): Promise<IDemandeIntervention[]> {
     const spinalProcess = await spinalServiceTicket.getAllProcess(contextId);
-    const stepsToExclude = ['Clôturée', 'Refusée', 'Archived'];
+    const stepsToExclude = ['Terminé', 'Refusé', 'Archived'];
     const dis = [];
+
 
     for (const process of spinalProcess) {
       const steps: SpinalNodeRef[] =
@@ -124,6 +125,7 @@ export class SyncRunPull {
     }
     if (dis.length === 0) return;
     const token = await getApiToken(this.config,this.axiosInstance);
+    // !! ici on doit renvoyer que les tickets qui ne sont pas dans les steps à exclure
     return getDIs(this.axiosInstance,token, this.clientBuildingId, dateToString(this.config.mission.lastSync.get()));
   }
 
@@ -326,13 +328,12 @@ export class SyncRunPull {
     );
     
     if (tickets.length > 0) {
-      console.log('ticket found');
-
       // recup et check domaine / step
       const ticketNode: SpinalNode<any> = tickets[0];
       const process = await this.updateProcess(ticketNode, ticket, context);
       if (!process)
         return console.error('Domaine Not found', ticket.reason.category_reason.label);
+
       await this.updateStep(ticketNode, ticket, context, process);
       this.updateTicketInfo(ticket, ticketNode);
       //console.log('ticket found', ticketNode.info.get());
@@ -362,7 +363,7 @@ export class SyncRunPull {
         context.info.id.get(),
         locationNode.info.id.get()
       );
-
+      console.log("Saved received ticket");
       if (typeof ticketId !== 'string') return console.error(ticketId);
       // check if step if default
       const ticketNode = SpinalGraphService.getRealNode(ticketId);
@@ -490,7 +491,7 @@ export class SyncRunPull {
     
     try {
 
-      await this.clearTickets();
+      //await this.clearTickets();
       //Get tickets from client
       let DI = await this.pullTickets();
       //DI = [DI[0]];
@@ -510,15 +511,16 @@ export class SyncRunPull {
       if (!this.running) break;
       const before = Date.now();
       try {
-        try {
+
+        /* !! try {
           const DI = await this.updateSpinalContext();
           await this.updateContext(DI);
         } catch (e) {
           console.error(e);
-        }
+        }*/
+        console.log("Pulling tickets...");
         const DI2 = await this.pullTickets();
         await this.updateContext(DI2);
-
         this.config.mission.lastSync.set(Date.now());
       } catch (e) {
         console.error(e);

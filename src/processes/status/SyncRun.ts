@@ -129,6 +129,8 @@ export default class SyncRun implements IStatus {
     //await this.syncRunHub.init(this.clientBuildingId,map,this.axiosClient);
     await this.syncRunPull.init(this.clientBuildingId,map,this.axiosClient);
     //await Promise.all([this.syncRunPull.run(), this.syncRunHub.run()]);
+    //await Promise.all([this.syncRunHub.run()]);
+    await Promise.all([this.syncRunPull.run()]);
     return 0;
   }
 
