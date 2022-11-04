@@ -42,11 +42,6 @@ import {
 import type OrganConfigModel from '../../../model/OrganConfigModel';
 import { getApiToken } from '../../../services/veolys/Auth';
 import {
-  diConsulte,
-  IDemandeInterventions,
-  IDemandesItem,
-} from '../../../services/mission/DIConsulte';
-import {
   getDIs,
   IDemandeIntervention
 } from '../../../services/veolys/DIConsulte';
@@ -459,7 +454,6 @@ export class SyncRunPull {
         let realChildNode = children[elt];
         await realNode.removeChild(realChildNode, relationName, relationType);
       }
-      console.log("Relation removed : " + relationName);
       await realNode.removeRelation(relationName, relationType);
     }
   }

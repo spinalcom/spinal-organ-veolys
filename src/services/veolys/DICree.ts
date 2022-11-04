@@ -216,85 +216,6 @@ export enum category_reason{
   "Alarme - Intrusion"="Alarme - Intrusion",
 }
 
-
-export const CTG_REASON_ID_MAPPING = new Map<string, number>([
-  ["_Ascenseur / Anomalie indicateur ou voyant", 17],
-  ["_Ascenseur / Ascenseur bloqué avec occupants", 20],
-  ["_Ascenseur / Ascenseur bloqué sans occupants", 21],
-  ["_Ascenseur / _Autre", 22],
-  ["_Ascenseur / Bouton ou serrure hors service", 23],
-  ["_Ascenseur / Bruit anormal", 24],
-  ["_Ascenseur / Mauvaise mise à  niveau", 29],
-  ["_Ascenseur / Défaut éclairage", 951],
-  ["_Ascenseur / Mise en place protection de cabine", 1731],
-  ["Escalier mécanique / _Autre", 138],
-  ["Escalier mécanique / Bruit anormal", 139],
-  ["Escalier mécanique / Escalier à  l'arret", 141],
-  ["Escalier mécanique / Anomalie indicateur ou voyant", 2472],
-  ["Escalier mécanique / Bouton ou serrure hors service", 2473],
-  ["Escalier mécanique / Mauvaise mise à  niveau", 2474],
-  ["GPA - GBF / Plomberie", 1278],
-  ["GPA - GBF / Electricité", 1279],
-  ["GPA - GBF / Contrôle d'accès", 1280],
-  ["GPA - GBF / SSI", 1282],
-  ["GPA - GBF / Serrurerie", 1283],
-  ["GPA - GBF / Second oeuvre", 1284],
-  ["GPA - GBF / Chauffage", 1522],
-  ["GPA - GBF / Climatisation", 1524],
-  ["Climatisation chauffage / Demande de mise à l'arrêt du chauffage", 42],
-  ["Climatisation chauffage / Demande de mise en service du chauffage", 43],
-  ["Climatisation chauffage / Odeur anormale", 48],
-  ["Climatisation chauffage / Trop chaud", 52],
-  ["Climatisation chauffage / Trop froid", 54],
-  ["Clos / Couvert / Problème d'étanchéité", 59],
-  ["Contrôle d'accès - Intrusion / Anomalie lecteur de badge", 65],
-  ["Contrôle d'accès - Intrusion / Anomalie porte sortie de secours", 66],
-  ["Décoration / Second Oeuvre / Anomalie revetement de sol", 84],
-  ["Décoration / Second Oeuvre / Anomalie revetement mural", 85],
-  ["Décoration / Second Oeuvre / Anomalie faux plafond", 87],
-  ["Détection - Extinction incendie / Anomalie extincteur", 102],
-  ["Détection - Extinction incendie / Anomalie interphone", 103],
-  ["Electricité / Anomalie bloc secours", 117],
-  ["Electricité / Plus d'éclairage (anomalie générale)", 129],
-  ["Electricité / Plus de courant (anomalie générale)", 130],
-  ["Espaces verts / Intervention sur espaces verts extérieurs", 146],
-  ["Gestion des badges / Création d'un badge", 151],
-  ["Plomberie / Fuite", 226],
-  ["Portes automatiques / _Autre", 239],
-  ["Portes automatiques / Barrière automatique bloquée fermée", 240],
-  ["Portes automatiques / Barrière automatique bloquée ouverte", 241],
-  ["Portes automatiques / Portail bloqué fermé", 243],
-  ["Portes automatiques / Portail bloqué ouvert", 244],
-  ["Porte / Fenêtre / Store / Anomalie fenetre", 247],
-  ["Porte / Fenêtre / Store / Anomalie ferme porte", 248],
-  ["Porte / Fenêtre / Store / Anomalie porte", 250],
-  ["Porte / Fenêtre / Store / Anomalie serrure", 251],
-  ["Porte / Fenêtre / Store / Anomalie store", 252],
-  ["Vidéo surveillance / Anomalie caméra", 273],
-  ["Porte / Fenêtre / Store / Vitrage cassé", 923],
-  ["Gestion des badges / Désactivation d'un badge", 949],
-  ["Plomberie / Equipement hors service", 989],
-  ["Plomberie / Equipement bouché", 990],
-  ["Plomberie / Odeur anormale", 1030],
-  ["Plomberie / Odeur anormale", 1030],
-  ["Electricité / Anomalie éclairage extérieur", 1047],
-  ["Electricité / Disjonction", 1188],
-  ["Climatisation chauffage / Demande de mise à l'arrêt de la climatisation", 1227],
-  ["Climatisation chauffage / Demande de mise en service de la climatisation", 1228],
-  ["Gestion des badges / Modification badge", 1240],
-  ["Climatisation chauffage / Anomalie télécommande", 1299],
-  ["Alarme - Intrusion / Alarme - Intrusion", 1302],
-  ["Interphonie / Anomalie fonctionnement", 1342],
-  ["Portes automatiques / Porte garage bloquée ouverte", 1343],
-  ["Portes automatiques / Porte garage bloquée fermée", 1344],
-  ["Portes automatiques / Sas entrée principale bloqué fermé", 1345],
-  ["Portes automatiques / Sas entrée principale bloqué ouvert", 1346],
-  ["Espaces verts / Grille de sol / avaloirs bouchés", 1407],
-  ["Plomberie / Anomalie douche", 1473],
-
-]);
-
-
 export function diCree(
   obj: IDICree,
   axiosInstance : AxiosInstance,
@@ -308,7 +229,7 @@ export function diCree(
 
   return axiosInstance
     .post(`/ws/${buildingId}/hotlinerequests`,obj,config)
-    .then((res) => res.data.data);
+    .then((res) => res.data);
 }
 
 export function getCatergoryReasons(
@@ -347,11 +268,11 @@ export function getReasonId(
     .get(`/ws/${localizationId}/92940/reasons?limit=-1`,config)
     .then((res) => {
       const data = res.data.data;
-      data.forEach((element: any) => {
-        if(element.category_reason.label == category_reason && element.label == motif){
-          return element.id;
+      for (const el of data) {
+        if(el.category_reason.label == category_reason && el.label == motif){
+          return el.id;
         }
-      });
+      }
       return null;
     });
 }

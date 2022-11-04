@@ -114,8 +114,7 @@ export default class SyncRunTicketHub {
     for (const ticket of tickets) {
       // if the ticket doesn't have a veolysId it means it has not been sent to veolys yet
       if (typeof ticket.veolysId === 'undefined') {
-        // !!
-        //await this.createTicketToMission(contextId, processId, stepId, ticket);
+        await this.createTicketToVeolys(contextId, processId, stepId, ticket);
       }
     }
   }
@@ -217,7 +216,7 @@ export default class SyncRunTicketHub {
    * @return {*}  {Promise<void>}
    * @memberof SyncRunTicketHub
    */
-  async createTicketToMission(
+  async createTicketToVeolys(
     contextId: string,
     processId: string,
     stepId: string,
@@ -238,32 +237,49 @@ export default class SyncRunTicketHub {
     const ticketNode = SpinalGraphService.getRealNode(ticketRef.id.get());
 
     const note = ticketRef.description?.get() || '-';
-    console.log('new ticket from hub :', {
+    /*console.log('new ticket from hub :', {
       note,
       context: context.info.name.get(),
       process: process.info.name.get(),
       step: step.info.name.get(),
       name: ticketRef.name?.get(),
       priority: ticketRef.priority?.get(),
-      type: ticketRef.type?.get(),
+      //type: ticketRef.type?.get(),
       creationDate: ticketRef.creationDate?.get(),
       id: ticketRef.id?.get(),
-      stepId: ticketRef.stepId?.get(),
-      color: ticketRef.color?.get(),
-    });
+      //stepId: ticketRef.stepId?.get(),
+      //color: ticketRef.color?.get(),
+    });*/
 
     try {
       const ticketItems = await getTicketLocals(ticketRef.id.get());
-      // This part is a bit tricky, we need to get the veolys id of the localization
       const local = getBuildingVeolysId(ticketItems.local?.info.id.get(), this.mapBuilding)
       const date = moment(ticketRef.creationDate?.get());
       const token = await getApiToken(this.config,this.axiosInstance);
+      console.log({local: local, category_reason: process.info.name.get(), motif: ticketRef.name.get()});
       const reasonId = await getReasonId(this.axiosInstance,token,local,process.info.name.get(),ticketRef.name.get());
+      console.log("reasonId : ", reasonId);
+      if(!reasonId) {
+        console.log("Aborted : reasonId not found for ",ticketRef.name.get());
+        return
+      }
+      let priority: number = ticketRef.priority?.get() || 0;
+      switch (ticketRef.priority?.get()){
+        case 0:
+          priority = 2;
+          break;
+        case 1:
+          priority = 1;
+          break;
+        case 2:
+          priority = 3;
+      }
+      
       const req: IDICree = {
         author: 92940,
         localization: local,
         reason: reasonId,
-        priority: 1,
+        priority: priority,
         description: note
       };
       /*await this.addImagesFromTickets(ticketNode, req);
@@ -292,8 +308,9 @@ export default class SyncRunTicketHub {
         }
       }*/
       const di = await diCree(req, this.axiosInstance, token,this.clientBuildingId);
+      console.log('di saved and recieved : ', di.id);
       // set step
-      setOrAddAttr(ticketNode.info, 'gmaoId', di.id);
+      setOrAddAttr(ticketNode.info, 'veolysId', di.id);
     } catch (e) {
       console.log(e);
     }
@@ -359,7 +376,7 @@ export default class SyncRunTicketHub {
       if (!this.running) break;
       const before = Date.now();
       try {
-        //await this.updateSpinalContext();
+        await this.updateSpinalContext();
         console.log("J'update le context");
       } catch (e) {
         console.error(e);

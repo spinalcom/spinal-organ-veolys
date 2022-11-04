@@ -23,7 +23,7 @@
  */
 
 import { SpinalGraphService, SpinalContext, SpinalGraph, SpinalNode } from 'spinal-env-viewer-graph-service';
-import { GEO_BUILDING_TYPE, GEO_FIND_BUILDING } from '../../constants';
+import { GEO_BUILDING_TYPE, GEO_FIND_BUILDING, GEO_FLOOR_TYPE, GEO_ROOM_TYPE } from '../../constants';
 import OrganConfigModel from '../../model/OrganConfigModel';
 import { getApiToken } from '../../services/veolys/Auth';
 import getLocauxListe from '../../services/veolys/getLocalizations';
@@ -33,10 +33,11 @@ import SyncRunPull from './SyncRunHandler/SyncRunPull';
 import SyncRunTicketHub from './SyncRunHandler/SyncRunTicketHub';
 import { join as resolvePath } from 'path';
 import { MapBuilding } from './SyncRunHandler/MapBuilding';
-
+import {  serviceDocumentation } from 'spinal-env-viewer-plugin-documentation-service';
 import axios from 'axios';
 import {AxiosInstance} from 'axios';
 import * as axiosRetry from 'axios-retry';
+import { findOneInContext } from '../../utils/findOneInContext';
 
 
 
@@ -102,21 +103,33 @@ export default class SyncRun implements IStatus {
   private async init(): Promise<MapBuilding> {
     const mapBuilding: MapBuilding = new Map;
     const spinalBuildingInfo = await this.getSpinalBuildingInfo();
-
+    const spatialContext = await this.getSpinalGeo();
     // Purpose is to put all tickets on building (only temporary while veolysId -> spinalId are not a thing)
     const spinalId = spinalBuildingInfo?.info.id?.get() 
     const token = await getApiToken(this.config,this.axiosClient);
     const buildingInfo = await getBuildingInfo(token,this.axiosClient);
     this.clientBuildingId = buildingInfo.id;
     const locaux = await getLocauxListe(token, buildingInfo.id, this.axiosClient);
-    for(const local of locaux){
-      const localId = local.id;
-      mapBuilding.set(localId,spinalId);
+
+    //const locauxIds = [ 217639, 218340, 218352]
+    const locauxIds = locaux.map((local) => local.id);
+
+    console.log("Mapping spinal localizations to veolys localizations...");
+    let myNodes = await spatialContext.findInContext(spatialContext, (node) => {
+      // @ts-ignore
+      return node.getType().get() === GEO_FLOOR_TYPE || node.getType().get() === GEO_ROOM_TYPE;
+    });
+
+    for(const myNode of myNodes) {
+      const attributes = await serviceDocumentation.getAttributesByCategory(myNode, "veolys")
+      for(const attribute of attributes){
+          const id = locauxIds.find((id) => id == attribute.value._data);
+          if(id) {
+            mapBuilding.set(id,myNode.info.id.get());
+          }
+        }
     }
-    //for (const local of locals.Locaux) {
-    //  console.assert(local.chIdentifLong, "spinalNodeId missing", local.Local.chLibelle)
-    //  mapBuilding.set(local.chIdentifLong, local.Local.chLibelle);
-    //}
+
     return mapBuilding;
   }
 
@@ -126,11 +139,12 @@ export default class SyncRun implements IStatus {
   async start(): Promise<number> {
     console.log('start SyncRun');
     const map = await this.init();
-    //await this.syncRunHub.init(this.clientBuildingId,map,this.axiosClient);
+    console.log("Mapping done ", map);
+    await this.syncRunHub.init(this.clientBuildingId,map,this.axiosClient);
     await this.syncRunPull.init(this.clientBuildingId,map,this.axiosClient);
-    //await Promise.all([this.syncRunPull.run(), this.syncRunHub.run()]);
+    await Promise.all([this.syncRunPull.run(), this.syncRunHub.run()]);
     //await Promise.all([this.syncRunHub.run()]);
-    await Promise.all([this.syncRunPull.run()]);
+    //await Promise.all([this.syncRunPull.run()]);
     return 0;
   }
 
