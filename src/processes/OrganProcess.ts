@@ -27,10 +27,7 @@ import SpinalIO from '../services/SpinalIO';
 import OrganConfig from './OrganConfig';
 import IStatus from './status/IStatus';
 import StandBy from './status/StandBy';
-import SyncProcess from './status/SyncProcess';
 import SyncRun from './status/SyncRun';
-import SyncSpatial from './status/SyncSpatial';
-import SyncEquip from './status/SyncEquip';
 
 export class OrganProcess {
   config: OrganConfigModel; // contains organ information
@@ -59,10 +56,7 @@ export class OrganProcess {
     }
 
     this.mapStatusHandler.set(0, new StandBy());
-    this.mapStatusHandler.set(1, new SyncSpatial(this.graph, this.config));
-    this.mapStatusHandler.set(2, new SyncProcess(this.graph, this.config));
     this.mapStatusHandler.set(3, new SyncRun(this.graph, this.config));
-    this.mapStatusHandler.set(4, new SyncEquip(this.graph, this.config));
   }
 
   /**

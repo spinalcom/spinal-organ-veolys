@@ -41,7 +41,6 @@ import moment = require('moment');
 import { FileExplorer } from 'spinal-env-viewer-plugin-documentation-service';
 import { MESSAGE_TYPES } from 'spinal-models-documentation';
 import { getB64Image } from '../../../utils/getB64Image';
-import { diModify } from '../../../services/mission/DIModify';
 import { Lst, Ptr } from 'spinal-core-connectorjs_type';
 import SpinalIO from '../../../services/SpinalIO';
 import { getBuildingVeolysId, MapBuilding } from './MapBuilding';
@@ -119,41 +118,6 @@ export default class SyncRunTicketHub {
     }
   }
 
-  async getAndSendFiles(ticketRef: SpinalNodeRef): Promise<void> {
-    const ticketNode = SpinalGraphService.getRealNode(ticketRef.id.get());
-
-    const gmaoId = ticketNode.info.gmaoId?.get();
-    if (gmaoId === undefined) {
-      console.error('error send PJ, no gmaoID');
-      return;
-    }
-
-    const files = await this.getTicketFiles(ticketNode);
-
-    if (files.length > 0) {
-      const pjs = await Promise.all(
-        files.map(async (file) => {
-          try {
-            file._info.add_attr({ sentToGmao: true });
-          } catch (e) {
-            file._info.sentToGmao?.set(true);
-          }
-          return {
-            chNomPJ: file.name.get(),
-            chDataPJ: await getB64Image(file),
-          };
-        })
-      );
-      console.log('Send to Mission', {
-        gmaoId,
-        files: pjs.map((itm) => itm.chNomPJ),
-      });
-      await diModify(gmaoId, {
-        chNumSession: await getApiToken(this.config,this.axiosInstance),
-        PiecesJointes: pjs,
-      });
-    }
-  }
 
   async getTicketFiles(ticketNode: SpinalNode<any>): Promise<any[]> {
     const dir = await FileExplorer.getDirectory(ticketNode);

@@ -25,14 +25,11 @@
 import { spinalCore, Model } from 'spinal-core-connectorjs_type';
 
 export interface MissionConfigObj extends spinal.Model {
-  appelant: spinal.Str;
   plateforme: spinal.Str;
   apiLogin: spinal.Str;
   apiPassword: spinal.Str;
   pullInterval: spinal.Val;
   lastSync: spinal.Val;
-  prefixBuilding: spinal.Str;
-  contextsEquip: spinal.Lst<spinal.Str>;
 }
 
 export default class OrganConfigModel extends Model {
@@ -49,15 +46,12 @@ export default class OrganConfigModel extends Model {
     this.add_attr('spatialContextID', '');
     this.add_attr('restart', false);
     this.add_attr('mission', {
-      appelant: '',
       plateforme:'',
       apiLogin: '',
       apiPassword: '',
       pullInterval: 5 * 60 * 1000,
       lastSync: 0,
-      organStatus: 0,
-      prefixBuilding: '',
-      contextsEquip: [],
+      organStatus: 0
     });
   }
 
@@ -70,7 +64,6 @@ export default class OrganConfigModel extends Model {
     if (process?.env.CONTEXT_ID) this.contextId.set(process.env.CONTEXT_ID);
     if (process?.env.SPATIAL_CONTEXT_ID)
       this.spatialContextID.set(process.env.SPATIAL_CONTEXT_ID);
-    if (process?.env.APPELANT) this.mission.appelant.set(process.env.APPELANT);
     if (process?.env.PLATEFORME) this.mission.plateforme.set(process.env.PLATEFORME);
     if (process?.env.API_LOGIN)
       this.mission.apiLogin.set(process.env.API_LOGIN);
@@ -78,8 +71,6 @@ export default class OrganConfigModel extends Model {
       this.mission.apiPassword.set(process.env.API_PASSWORD);
     if (process?.env.PULL_INTERVAL)
       this.mission.pullInterval.set(process.env.PULL_INTERVAL);
-    if (process?.env.PREFIX_BUILDING)
-      this.mission.prefixBuilding.set(process.env.PREFIX_BUILDING);
   }
   bindRestart() {
     this.restart.bind(() => {
