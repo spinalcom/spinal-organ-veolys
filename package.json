@@ -12,7 +12,6 @@
     "run": "node index.js"
   },
   "dependencies": {
-    "@types/superagent": "^4.1.14",
     "axios": "^0.21.1",
     "axios-concurrency": "^1.0.1",
     "axios-debug-log": "^0.8.2",
@@ -29,6 +28,7 @@
   },
   "devDependencies": {
     "@types/mocha": "^5.2.5",
+    "@types/superagent": "4.1.10",
     "@types/node": "^10.12.12",
     "doctoc": "^2.2.0",
     "jsdoc-babel": "^0.5.0",
