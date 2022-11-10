@@ -28,7 +28,6 @@
   },
   "devDependencies": {
     "@types/mocha": "^5.2.5",
-    "@types/superagent": "4.1.10",
     "@types/node": "^10.12.12",
     "doctoc": "^2.2.0",
     "jsdoc-babel": "^0.5.0",
